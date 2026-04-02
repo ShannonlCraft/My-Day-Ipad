@@ -2174,7 +2174,22 @@ function initFirebase(){
       _orig(key,val);
       if(fbUser && SYNC_KEYS.includes(key)) debouncedPush(key,val);
     };
+    // Handle redirect sign-in result (iOS/iPadOS flow)
+    fbAuth.getRedirectResult().then(result=>{
+      if(result&&result.user){
+        console.log('Redirect sign-in complete:',result.user.email);
+      }
+    }).catch(e=>{
+      if(e.code&&e.code!=='auth/no-current-user'){
+        showToast('Sign-in error: '+e.message);
+        console.warn('getRedirectResult error:',e);
+      }
+    });
+    // Silent auth timeout
+    let _authResolved=false;
+    const _authTimeout=setTimeout(()=>{ if(!_authResolved){ setSyncUI(false); } },20000);
     fbAuth.onAuthStateChanged(async user=>{
+      _authResolved=true; clearTimeout(_authTimeout);
       fbUser=user;
       if(user){
         setSyncUI(true, user.displayName||user.email);
@@ -2235,12 +2250,16 @@ function handleSyncBtn(){
 function signInSync(){
   if(!fbAuth){ showToast('Firebase not configured yet'); return; }
   const provider = new firebase.auth.GoogleAuthProvider();
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  // Detect iOS/iPadOS (modern iPads report MacIntel platform)
+  const _ua=navigator.userAgent||'';
+  const isIOS=(/iPad|iPhone|iPod/.test(_ua))||
+              (navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)||
+              (/Mac/.test(_ua)&&navigator.maxTouchPoints>1);
   if(isIOS){
     localStorage.setItem('sc_sync_pending','1');
     fbAuth.signInWithRedirect(provider);
   } else {
-    fbAuth.signInWithPopup(provider).catch(e=>showToast('Sign in cancelled'));
+    fbAuth.signInWithPopup(provider).catch(e=>{console.warn('signInWithPopup error:',e.code,e.message);showToast(e.code==='auth/popup-blocked'?'Pop-up blocked — try again':'Sign in cancelled');});
   }
 }
 
