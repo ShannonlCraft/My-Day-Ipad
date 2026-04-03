@@ -1409,8 +1409,8 @@ function deleteTask(id){const e=document.querySelector(`[data-tid="${id}"]`),go=
 function taskRow(t){const dl=t.deadline&&!t.completed?(()=>{const d=new Date(t.deadline),now=new Date(),ip=d<now,lb=d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' at '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return`<div style="font-size:10px;font-weight:700;color:${ip?'#ef4444':'var(--orange)'};margin-top:2px;">🔔 ${ip?'Was due':'Due'} ${lb}</div>`;})():'';return`<div class="group-row ${t.completed?'checked':''}" data-tid="${t.id}"><div class="task-sq" onclick="toggleTask(${t.id})">${CHK_SQ}</div><div class="row-body"><div class="row-title">${esc(t.text)}</div>${dl}</div><button class="task-del" onclick="deleteTask(${t.id})" aria-label="Delete">${DEL_ICON}</button></div>`;}
 function renderTasks(){const pending=tasks.filter(t=>!t.completed),done=tasks.filter(t=>t.completed);const pc=el('pendingCard'),dc=el('doneCard'),es=el('emptyState'),dl=el('doneLabel');if(!pc||!dc||!es||!dl)return;if(pending.length){pc.style.display='block';pc.innerHTML=pending.map(taskRow).join('');es.style.display='none';}else{pc.style.display='none';es.style.display='block';const em=el('emptyMsg');if(em)em.textContent=done.length?'All tasks complete.':'Add tasks above to plan your day.';}if(done.length){dc.style.display='block';dc.innerHTML=done.map(taskRow).join('');dl.style.display='block';}else{dc.style.display='none';dl.style.display='none';}}
 function renderStats(){const p=tasks.filter(t=>!t.completed).length,d=tasks.filter(t=>t.completed).length;const pp=el('pillPending'),pd=el('pillDone');if(!pp||!pd)return;pp.textContent=`${p} left`;pd.textContent=`${d} done`;pd.className='pill'+(d>0?' hot':'');}
-function renderProgress(){const tot=tasks.length,dn=tasks.filter(t=>t.completed).length,wrap=el('progressWrap');if(!tot){wrap.style.display='none';return;}wrap.style.display='block';const pct=Math.round((dn/tot)*100);const fill=el('progressFill'),pv=el('progressVal');if(!fill||!pv)return;fill.style.width=pct+'%';fill.className='progress-fill'+(pct===100?' complete':'');pv.textContent=`${dn} / ${tot}`;}
-function renderWins(){const done=tasks.filter(t=>t.completed);const wbn=el('winsBigNum');if(wbn)wbn.textContent=done.length;const ctx=el('winsContext');if(!done.length)ctx.innerHTML="Keep going —<br><strong>you've got this.</strong>";else if(done.length===1)ctx.innerHTML="You completed<br><strong>1 win</strong> today.";else ctx.innerHTML=`You recorded<br><strong>${done.length} wins</strong> today.`;const allKeys=Object.keys(winsHistory),wrc=el('weeklyRecap');if(allKeys.length>=2){const rk=allKeys.sort().reverse().slice(0,7),wt=rk.reduce((a,k)=>a+(winsHistory[k]?.length||0),0);const bd=rk.reduce((b,k)=>{const c=winsHistory[k]?.length||0;return c>b.count?{date:k,count:c}:b},{date:'',count:0});wrc.innerHTML=`<div class="section-header">Weekly Recap</div><div class="recap-card"><div class="recap-eyebrow">Last ${rk.length} Days</div><div class="recap-grid"><div class="recap-stat"><div class="recap-num">${wt}</div><div class="recap-label">Total wins</div></div><div class="recap-stat"><div class="recap-num">${bestStreak}</div><div class="recap-label">Best streak</div></div>${bd.date?`<div class="recap-wide"><div class="recap-wide-label">Most productive day</div><div class="recap-wide-val">${prettyDate(bd.date)}</div></div>`:''}</div></div>`;}else wrc.innerHTML='';const twc=el('todayWinsCard');if(done.length){twc.innerHTML=`<div class="group-card">${done.map(t=>`<div class="group-row"><div class="row-icon-sq orange"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(t.text)}</div></div></div>`).join('')}</div>`;}else twc.innerHTML=`<div class="empty"><div class="empty-msg">Complete tasks and they'll appear here.</div></div>`;const hist=el('historySection'),keys=Object.keys(winsHistory).sort().reverse();if(!keys.length){hist.innerHTML='';return;}hist.innerHTML=`<div class="section-header">Past Wins</div>`+keys.map(k=>{const items=winsHistory[k];if(!items?.length)return'';return`<div class="history-date-hdr">${prettyDate(k)}</div><div class="group-card">${items.map(i=>`<div class="group-row"><div class="row-icon-sq"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(i)}</div></div></div>`).join('')}</div>`;}).join('');}
+function renderProgress(){const tot=tasks.length,dn=tasks.filter(t=>t.completed).length,wrap=el('progressWrap');if(!wrap)return;if(!tot){wrap.style.display='none';return;}wrap.style.display='block';const pct=Math.round((dn/tot)*100);const fill=el('progressFill'),pv=el('progressVal');if(!fill||!pv)return;fill.style.width=pct+'%';fill.className='progress-fill'+(pct===100?' complete':'');pv.textContent=`${dn} / ${tot}`;}
+function renderWins(){const done=tasks.filter(t=>t.completed);const wbn=el('winsBigNum');if(wbn)wbn.textContent=done.length;const ctx=el('winsContext');if(ctx){if(!done.length)ctx.innerHTML="Keep going —<br><strong>you've got this.</strong>";else if(done.length===1)ctx.innerHTML="You completed<br><strong>1 win</strong> today.";else ctx.innerHTML=`You recorded<br><strong>${done.length} wins</strong> today.`;}const allKeys=Object.keys(winsHistory),wrc=el('weeklyRecap');if(wrc&&allKeys.length>=2){const rk=allKeys.sort().reverse().slice(0,7),wt=rk.reduce((a,k)=>a+(winsHistory[k]?.length||0),0);const bd=rk.reduce((b,k)=>{const c=winsHistory[k]?.length||0;return c>b.count?{date:k,count:c}:b},{date:'',count:0});wrc.innerHTML=`<div class="section-header">Weekly Recap</div><div class="recap-card"><div class="recap-eyebrow">Last ${rk.length} Days</div><div class="recap-grid"><div class="recap-stat"><div class="recap-num">${wt}</div><div class="recap-label">Total wins</div></div><div class="recap-stat"><div class="recap-num">${bestStreak}</div><div class="recap-label">Best streak</div></div>${bd.date?`<div class="recap-wide"><div class="recap-wide-label">Most productive day</div><div class="recap-wide-val">${prettyDate(bd.date)}</div></div>`:''}</div></div>`;}else if(wrc)wrc.innerHTML='';const twc=el('todayWinsCard');if(twc){if(done.length){twc.innerHTML=`<div class="group-card">${done.map(t=>`<div class="group-row"><div class="row-icon-sq orange"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(t.text)}</div></div></div>`).join('')}</div>`;}else twc.innerHTML=`<div class="empty"><div class="empty-msg">Complete tasks and they'll appear here.</div></div>`;}const hist=el('historySection'),keys=Object.keys(winsHistory).sort().reverse();if(!hist)return;if(!keys.length){hist.innerHTML='';return;}hist.innerHTML=`<div class="section-header">Past Wins</div>`+keys.map(k=>{const items=winsHistory[k];if(!items?.length)return'';return`<div class="history-date-hdr">${prettyDate(k)}</div><div class="group-card">${items.map(i=>`<div class="group-row"><div class="row-icon-sq"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(i)}</div></div></div>`).join('')}</div>`;}).join('');}
 function updateBadge(){const d=tasks.filter(t=>t.completed).length,b=el('winsBadge');if(!b)return;b.style.display=d?'block':'none';b.textContent=d;}
 function clearWinsBadge(){const b=el('winsBadge');if(b)b.style.display='none';}
 function renderAll(){renderTasks();renderStats();renderProgress();renderHabits();renderConf();renderWins();updateBadge();renderScore();renderStreak();renderLevel();renderMomentum();}
@@ -1457,7 +1457,7 @@ function loadThoughts(){try{return JSON.parse(localStorage.getItem(VOICE_KEY)||'
 function saveThoughts(t){localStorage.setItem(VOICE_KEY,JSON.stringify(t));}
 function formatTime(iso){const d=new Date(iso),now=new Date(),diff=now-d,mins=Math.floor(diff/60000),hrs=Math.floor(diff/3600000),days=Math.floor(diff/86400000);if(mins<1)return'Just now';if(mins<60)return`${mins}m ago`;if(hrs<24)return`${hrs}h ago`;if(days===1)return'Yesterday · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
 const folderOpen={};
-function renderFolders(){const thoughts=loadThoughts(),container=el('voiceFolders');if(!container)return;const groups={};CATEGORIES.forEach(c=>{groups[c.id]=[];});loadCustomCats().forEach(c=>{if(!groups[c.id])groups[c.id]=[];});thoughts.forEach(t=>{const key=t.category||'general';if(!groups[key])groups[key]=[];groups[key].push(t);});const customCats=loadCustomCats(),allCats=[...CATEGORIES,...customCats.map(c=>({id:c.id,name:c.name,icon:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`}))];let html='';allCats.forEach(cat=>{const items=(groups[cat.id]||[]).slice().reverse(),isOpen=folderOpen[cat.id]!==false;html+=`<div class="folder-block"><div class="folder-header ${isOpen?'open':''}" onclick="toggleFolder('${cat.id}')"><div class="folder-icon">${cat.icon}</div><div class="folder-name">${cat.name}</div><div class="folder-count">${items.length}</div><svg class="folder-chevron ${isOpen?'open':''}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>${isOpen&&items.length?`<div class="folder-entries">${items.map(t=>thoughtRow(t)).join('')}</div>`:''}</div>`;});container.innerHTML=html;}
+function renderFolders(){const thoughts=loadThoughts(),container=el('voiceFolders');if(!container)return;const groups={};CATEGORIES.forEach(c=>{groups[c.id]=[];});loadCustomCats().forEach(c=>{if(!groups[c.id])groups[c.id]=[];});thoughts.forEach(t=>{const key=t.category||'general';if(!groups[key])groups[key]=[];groups[key].push(t);});const customCats=loadCustomCats(),allCats=[...CATEGORIES,...customCats.map(c=>({id:c.id,name:c.name,icon:`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>`}))];let html='';allCats.forEach(cat=>{const items=(groups[cat.id]||[]).slice().reverse(),isOpen=folderOpen[cat.id]!==false;html+=`<div class="folder-block"><div class="folder-header ${isOpen?'open':''}" onclick="toggleFolder('${cat.id}')"><div class="folder-icon">${cat.icon}</div><div class="folder-name">${esc(cat.name)}</div><div class="folder-count">${items.length}</div><svg class="folder-chevron ${isOpen?'open':''}" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>${isOpen&&items.length?`<div class="folder-entries">${items.map(t=>thoughtRow(t)).join('')}</div>`:''}</div>`;});container.innerHTML=html;}
 function thoughtRow(t){return`<div class="thought-entry" id="thought-${t.id}"><div class="thought-text">${esc(t.text)}</div><div class="thought-footer"><div class="thought-time">${formatTime(t.ts)}</div><div class="thought-actions"><button class="thought-action" onclick="shareThought('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>Share</button><button class="thought-del" onclick="deleteThought('${t.id}')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div></div></div>`;}
 function toggleFolder(catId){folderOpen[catId]=folderOpen[catId]===false?true:false;renderFolders();}
 function deleteThought(id){let t=loadThoughts();t=t.filter(x=>x.id!==id);saveThoughts(t);renderFolders();}
@@ -1478,7 +1478,7 @@ function loadRecurring(){try{return JSON.parse(localStorage.getItem(K_RECURRING)
 function saveRecurring(l){localStorage.setItem(K_RECURRING,JSON.stringify(l));}
 function getRecurDone(){try{const d=JSON.parse(localStorage.getItem(K_RECUR_DONE)||'{}');if(d.date!==todayStr())return{date:todayStr(),ids:[]};return d;}catch(e){return{date:todayStr(),ids:[]};}}
 function markRecurDone(id){const d=getRecurDone();if(!d.ids.includes(id))d.ids.push(id);localStorage.setItem(K_RECUR_DONE,JSON.stringify(d));}
-function injectRecurring(){const list=loadRecurring();if(!list.length)return;const todayDay=new Date().getDay(),done=getRecurDone();list.forEach(item=>{if(!item.days.includes(todayDay))return;if(done.ids.includes(item.id))return;if(item.type==='task'){const already=tasks.find(t=>t.recurId===item.id&&!t.completed);if(!already)tasks.unshift({id:Date.now()+Math.random(),recurId:item.id,text:item.name,completed:false,createdAt:new Date().toISOString(),recurring:true});}else if(item.type==='habit'){const habits=getHabits(),already=habits.find(h=>h.recurId===item.id);if(!already){habits.push({text:item.name,recurId:item.id,tempToday:true});saveHabitsList(habits);habitState.push(false);}}markRecurDone(item.id);});save();}
+function injectRecurring(){const list=loadRecurring();if(!list.length)return;const todayDay=new Date().getDay(),done=getRecurDone();list.forEach(item=>{if(!item.days.includes(todayDay))return;if(done.ids.includes(item.id))return;if(item.type==='task'){const already=tasks.find(t=>t.recurId===item.id&&!t.completed);if(!already)tasks.unshift({id:Date.now()+'-'+Math.random().toString(36).substr(2,9),recurId:item.id,text:item.name,completed:false,createdAt:new Date().toISOString(),recurring:true});}else if(item.type==='habit'){const habits=getHabits(),already=habits.find(h=>h.recurId===item.id);if(!already){habits.push({text:item.name,recurId:item.id,tempToday:true});saveHabitsList(habits);habitState.push(false);}}markRecurDone(item.id);});save();}
 function cleanRecurringHabits(){const habits=getHabits(),cleaned=habits.filter(h=>!h.tempToday);if(cleaned.length!==habits.length){saveHabitsList(cleaned);habitState=habitState.slice(0,cleaned.length);save();}}
 function toggleRecurDay(btn){btn.classList.toggle('selected');}
 function selectEveryDay(){document.querySelectorAll('.day-pill').forEach(b=>b.classList.add('selected'));}
@@ -1588,6 +1588,8 @@ let calSelectedDate = todayStr();
 let calEditingId    = null;
 let calPickedColor  = EV_COLORS[0];
 let gcalAccessToken = null;
+// Migrate old 'gcalToken' key to versioned constant
+(function(){try{const oldToken=localStorage.getItem('gcalToken');if(oldToken){localStorage.setItem(K_GCAL_TOKEN,oldToken);localStorage.removeItem('gcalToken');}}catch(e){}})();
 
 /* ── Storage ── */
 function loadCalEvents(){try{return JSON.parse(localStorage.getItem(K_CAL)||'[]');}catch(e){return[];}}
@@ -1602,7 +1604,7 @@ function openCalendar(){
   calSelectedDate=todayStr();
   // Restore token from session, or silently re-auth if connected
   if(!gcalAccessToken){
-    const stored=localStorage.getItem('gcalToken');
+    const stored=localStorage.getItem(K_GCAL_TOKEN);
     if(stored){gcalAccessToken=stored;}
     else{
       const cfg=loadGcalCfg();
@@ -1844,7 +1846,7 @@ function initTokenClient(clientId){
       callback:async(resp)=>{
         if(resp.error){showToast('Google auth failed: '+resp.error);renderCalConnectCards();return;}
         gcalAccessToken=resp.access_token;
-        localStorage.setItem('gcalToken',resp.access_token);
+        localStorage.setItem(K_GCAL_TOKEN,resp.access_token);
         await syncGcalEvents(resp.access_token);
       }
     });
@@ -1931,6 +1933,7 @@ function disconnectGcal(){
   saveCalEvents(loadCalEvents().filter(e=>!e.fromGcal));
   const cfg=loadGcalCfg();cfg.connected=false;cfg.email='';saveGcalCfg(cfg);
   gcalAccessToken=null;
+  try{localStorage.removeItem(K_GCAL_TOKEN);}catch(e){}
   renderCalConnectCards();renderMonthGrid();showToast('Disconnected from Google');
 }
 
@@ -1947,7 +1950,7 @@ function openAddEvent(){
   calPickedColor=EV_COLORS[0];
   renderColorPicker();
   // Restore token from session
-  if(!gcalAccessToken){const t=localStorage.getItem('gcalToken');if(t)gcalAccessToken=t;}
+  if(!gcalAccessToken){const t=localStorage.getItem(K_GCAL_TOKEN);if(t)gcalAccessToken=t;}
   const cfg=loadGcalCfg();
   // If connected but no token, silently re-auth before opening
   if(cfg.connected&&cfg.clientId&&!gcalAccessToken){
@@ -1988,7 +1991,7 @@ function doSilentAuth(clientId){
       callback:(resp)=>{
         if(resp.error||!resp.access_token)return;
         gcalAccessToken=resp.access_token;
-        localStorage.setItem('gcalToken',resp.access_token);
+        localStorage.setItem(K_GCAL_TOKEN,resp.access_token);
         // Update the badge now that we have a token
         const src=el('calAddSource');
         if(src){src.textContent='→ Google Calendar';src.style.background='rgba(37,99,235,0.15)';src.style.color='#2563EB';}
@@ -2018,7 +2021,7 @@ function updateGcalLink(){
   const title=el('calEvTitle')?el('calEvTitle').value.trim():'';
   const date=el('calEvDate')?el('calEvDate').value:'';
   const cfg=loadGcalCfg();
-  const _tok=gcalAccessToken||localStorage.getItem('gcalToken');
+  const _tok=gcalAccessToken||localStorage.getItem(K_GCAL_TOKEN);
   if(cfg.connected&&_tok){
     linkDiv.innerHTML=`<span style="color:#2563EB;font-size:11px;font-weight:700;">✓ Will save directly to Google Calendar</span>`;
     return;
@@ -2031,7 +2034,7 @@ function updateGcalLink(){
   if(allDay||!start){const d=date.replace(/-/g,'');const n=incrementDay(date).replace(/-/g,'');dates=`${d}/${n}`;}
   else{const s=date.replace(/-/g,'')+'T'+start.replace(':','')+'00';const e2=end?date.replace(/-/g,'')+'T'+end.replace(':','')+'00':s;dates=`${s}/${e2}`;}
   const url=`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dates}${el('calEvNotes').value.trim()?'&details='+encodeURIComponent(el('calEvNotes').value.trim()):''}`;
-  linkDiv.innerHTML=`<a href="${url}" target="_blank" rel="noopener" class="cal-gcal-link" style="color:var(--orange);font-weight:700;display:inline-flex;align-items:center;gap:4px;">
+  linkDiv.innerHTML=`<a href="${url}" target="_blank" rel="noopener noreferrer" class="cal-gcal-link" style="color:var(--orange);font-weight:700;display:inline-flex;align-items:center;gap:4px;">
     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
     Open in Google Calendar
   </a>`;
@@ -2061,7 +2064,7 @@ async function saveCalEvent(){
   renderHeaderNextEvent();
   // Try to push to Google
   const cfg=loadGcalCfg();
-  if(!gcalAccessToken){const t=localStorage.getItem('gcalToken');if(t)gcalAccessToken=t;}
+  if(!gcalAccessToken){const t=localStorage.getItem(K_GCAL_TOKEN);if(t)gcalAccessToken=t;}
   if(cfg.connected&&gcalAccessToken){
     el('calSyncStatus').textContent='Saving to Google…';
     const ok=await createGcalEvent(ev);
@@ -2131,7 +2134,7 @@ function init(){
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
 
 /* ══ STORAGE MANAGEMENT ══ */
-function getStorageBytes(){let t=0;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i),v=localStorage.getItem(k);t+=(k.length+v.length)*2;}return t;}
+function getStorageBytes(){let t=0;for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!k)continue;const v=localStorage.getItem(k);if(v===null)continue;t+=(k.length+v.length)*2;}return t;}
 function updateStorageMeter(){const used=getStorageBytes(),MAX=5*1024*1024,pct=Math.min(100,(used/MAX)*100);const usedKB=(used/1024).toFixed(0),label=el('storageLabel'),bar=el('storageBar'),detail=el('storageDetail');if(!label)return;label.textContent=usedKB+'KB / 5MB';bar.style.width=pct+'%';bar.style.background=pct>75?'#ef4444':pct>50?'#f59e0b':'var(--orange)';detail.textContent='~'+pct.toFixed(1)+'% used · Auto-cleanup runs on app open';if(pct>80)label.style.color='#ef4444';else if(pct>60)label.style.color='#f59e0b';else label.style.color='var(--orange)';}
 function exportAllData(){const data={exportedAt:new Date().toISOString(),appVersion:'MyDay iPad v2',tasks:safeJsonParse(localStorage.getItem(K.TASKS),[]),winsHistory:safeJsonParse(localStorage.getItem(K.WINS),{}),soap:safeJsonParse(localStorage.getItem(K_SOAP),{}),thoughts:safeJsonParse(localStorage.getItem(VOICE_KEY),[]),prayers:safeJsonParse(localStorage.getItem(K_PRAYERS),[]),notes:safeJsonParse(localStorage.getItem(K.NOTES),{}),gratitude:safeJsonParse(localStorage.getItem(K.GRAT),null),recurring:safeJsonParse(localStorage.getItem(K_RECURRING),[]),calendarEvents:safeJsonParse(localStorage.getItem(K_CAL),[]),settings:safeJsonParse(localStorage.getItem(K_SETTINGS),{}),streak:safeJsonParse(localStorage.getItem(K.STREAK),{})};const json=JSON.stringify(data,null,2),d=new Date().toISOString().slice(0,10),filename='myday-backup-'+d+'.json';if(navigator.share&&navigator.canShare&&navigator.canShare({files:[new File([json],'test.json',{type:'application/json'})]})){const file=new File([json],filename,{type:'application/json'});navigator.share({files:[file],title:'MyDay Backup'}).then(()=>showToast('Backup shared — save to Files')).catch(()=>{});}else if(navigator.share){navigator.share({title:'MyDay Backup '+d,text:json}).catch(()=>{});showToast('Copy the text and save it somewhere safe');}else{const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);document.body.removeChild(a);},1000);showToast('Backup downloaded');}}
 function autoPruneData(){const now=Date.now(),cutoff60=now-(60*86400*1000);const allTasks=safeJsonParse(localStorage.getItem(K.TASKS),[]),prunedTasks=allTasks.filter(t=>!t.completed||!t.completedAt||new Date(t.completedAt).getTime()>cutoff60);if(prunedTasks.length<allTasks.length){localStorage.setItem(K.TASKS,JSON.stringify(prunedTasks));}const cutoff90date=new Date(now-(90*86400*1000)).toISOString().slice(0,10),evts=safeJsonParse(localStorage.getItem(K_CAL),[]),prunedEvts=evts.filter(e=>!e.date||e.date>=cutoff90date);if(prunedEvts.length<evts.length)localStorage.setItem(K_CAL,JSON.stringify(prunedEvts));const thoughts=safeJsonParse(localStorage.getItem(VOICE_KEY),[]);if(thoughts.length>300)localStorage.setItem(VOICE_KEY,JSON.stringify(thoughts.slice(-300)));const used=getStorageBytes();if(used>5*1024*1024*0.75)setTimeout(()=>showToast('⚠️ Storage is 75% full — export a backup in Settings'),3000);}
@@ -2315,7 +2318,7 @@ document.addEventListener('DOMContentLoaded', initFirebase);
       <div class="cal-topbar-sub" id="calSyncStatus">Tap a day to view schedule</div>
     </div>
     <div class="cal-topbar-actions">
-      <button class="cal-close-btn" onclick="closeCalendar()">
+      <button class="cal-close-btn" onclick="closeCalendar()" aria-label="Close calendar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
@@ -2381,7 +2384,7 @@ document.addEventListener('DOMContentLoaded', initFirebase);
 <div class="cal-day-overlay" id="calDayOverlay">
   <div class="cal-topbar">
     <div class="cal-topbar-left">
-      <button class="cal-back-btn" onclick="closeDayView()">
+      <button class="cal-back-btn" onclick="closeDayView()" aria-label="Back to calendar">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <div>
@@ -2394,7 +2397,7 @@ document.addEventListener('DOMContentLoaded', initFirebase);
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         New Event
       </button>
-      <button class="cal-close-btn" onclick="closeCalendar()">
+      <button class="cal-close-btn" onclick="closeCalendar()" aria-label="Close calendar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>
