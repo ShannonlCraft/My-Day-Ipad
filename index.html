@@ -1390,7 +1390,7 @@ function set5amTimer(){
 }
 function updateStreak(){const sd=safeJsonParse(localStorage.getItem(K.STREAK),{streak:0,best:0,last:''});const today=todayStr();if(sd.last===today){streak=sd.streak;bestStreak=sd.best;return;}const y=new Date();y.setDate(y.getDate()-1);const yStr=`${y.getFullYear()}-${p(y.getMonth()+1)}-${p(y.getDate())}`;streak=(sd.last===yStr)?sd.streak:0;bestStreak=sd.best||0;}
 function tryRecordStreak(score){const sd=safeJsonParse(localStorage.getItem(K.STREAK),{streak:0,best:0,last:''});const today=todayStr();if(sd.last===today)return;if(score>=60){const y=new Date();y.setDate(y.getDate()-1);const yStr=`${y.getFullYear()}-${p(y.getMonth()+1)}-${p(y.getDate())}`;streak=(sd.last===yStr)?sd.streak+1:1;if(streak>bestStreak)bestStreak=streak;localStorage.setItem(K.STREAK,JSON.stringify({streak,best:bestStreak,last:today}));const tsn=el('streakNum'),tsb=el('streakBest');if(tsn)tsn.textContent=streak;if(tsb)tsb.textContent=bestStreak;}}
-function calcScore(){const habits=getHabits();let s=0;if(scriptureOpened)s+=20;if(habits.length)s+=Math.round((habitState.filter(Boolean).length/habits.length)*40);const tot=tasks.length,dn=tasks.filter(t=>t.completed).length;if(tot>0)s+=Math.round((dn/tot)*40);return Math.min(100,s);}
+function calcScore(){const habits=getHabits();let s=0;if(scriptureOpened)s+=20;if(habits.length)s+=Math.round((habitState.filter(Boolean).length/habits.length)*30);s+=Math.round((confState.filter(Boolean).length/confState.length)*10);const tot=tasks.length,dn=tasks.filter(t=>t.completed).length;if(tot>0)s+=Math.round((dn/tot)*40);return Math.min(100,s);}
 function getScoreTitle(s){if(s===0)return"Let's build your day";if(s<25)return"You're getting started";if(s<50)return"Good progress today";if(s<75)return"You're on a roll";if(s<100)return"Almost a perfect day";return"Perfect day. You did it.";}
 function renderScore(){const habits=getHabits();const s=calcScore();const srf=el('scoreRingFill'),sn=el('scoreNum'),st=el('scoreTitle');if(!srf||!sn||!st)return;srf.style.strokeDashoffset=175.93-(175.93*(s/100));sn.textContent=s;st.textContent=getScoreTitle(s);const pip=(id,lit)=>{const e=el(id);if(e)e.className='score-pip'+(lit?' lit':'');};pip('pip-scripture',scriptureOpened);pip('pip-habits',habits.length>0&&habitState.filter(Boolean).length===habits.length);pip('pip-conf',confState.filter(Boolean).length===5);const tot=tasks.length,dn=tasks.filter(t=>t.completed).length;pip('pip-tasks',tot>0&&dn===tot);tryRecordStreak(s);}
 function renderStreak(){const sn=el('streakNum'),sb=el('streakBest');if(sn)sn.textContent=streak;if(sb)sb.textContent=bestStreak;}
@@ -1415,7 +1415,8 @@ function taskRow(t){const dl=t.deadline&&!t.completed?(()=>{const d=new Date(t.d
 function renderTasks(){const pending=tasks.filter(t=>!t.completed),done=tasks.filter(t=>t.completed);const pc=el('pendingCard'),dc=el('doneCard'),es=el('emptyState'),dl=el('doneLabel');if(!pc||!dc||!es||!dl)return;if(pending.length){pc.style.display='block';pc.innerHTML=pending.map(taskRow).join('');es.style.display='none';}else{pc.style.display='none';es.style.display='block';const em=el('emptyMsg');if(em)em.textContent=done.length?'All tasks complete.':'Add tasks above to plan your day.';}if(done.length){dc.style.display='block';dc.innerHTML=done.map(taskRow).join('');dl.style.display='block';}else{dc.style.display='none';dl.style.display='none';}}
 function renderStats(){const p=tasks.filter(t=>!t.completed).length,d=tasks.filter(t=>t.completed).length;const pp=el('pillPending'),pd=el('pillDone');if(!pp||!pd)return;pp.textContent=`${p} left`;pd.textContent=`${d} done`;pd.className='pill'+(d>0?' hot':'');}
 function renderProgress(){const tot=tasks.length,dn=tasks.filter(t=>t.completed).length,wrap=el('progressWrap');if(!wrap)return;if(!tot){wrap.style.display='none';return;}wrap.style.display='block';const pct=Math.round((dn/tot)*100);const fill=el('progressFill'),pv=el('progressVal');if(!fill||!pv)return;fill.style.width=pct+'%';fill.className='progress-fill'+(pct===100?' complete':'');pv.textContent=`${dn} / ${tot}`;}
-function renderWins(){const done=tasks.filter(t=>t.completed);const wbn=el('winsBigNum');if(wbn)wbn.textContent=done.length;const ctx=el('winsContext');if(ctx){if(!done.length)ctx.innerHTML="Keep going —<br><strong>you've got this.</strong>";else if(done.length===1)ctx.innerHTML="You completed<br><strong>1 win</strong> today.";else ctx.innerHTML=`You recorded<br><strong>${done.length} wins</strong> today.`;}const allKeys=Object.keys(winsHistory),wrc=el('weeklyRecap');if(wrc&&allKeys.length>=2){const rk=allKeys.sort().reverse().slice(0,7),wt=rk.reduce((a,k)=>a+(winsHistory[k]?.length||0),0);const bd=rk.reduce((b,k)=>{const c=winsHistory[k]?.length||0;return c>b.count?{date:k,count:c}:b},{date:'',count:0});wrc.innerHTML=`<div class="section-header">Weekly Recap</div><div class="recap-card"><div class="recap-eyebrow">Last ${rk.length} Days</div><div class="recap-grid"><div class="recap-stat"><div class="recap-num">${wt}</div><div class="recap-label">Total wins</div></div><div class="recap-stat"><div class="recap-num">${bestStreak}</div><div class="recap-label">Best streak</div></div>${bd.date?`<div class="recap-wide"><div class="recap-wide-label">Most productive day</div><div class="recap-wide-val">${prettyDate(bd.date)}</div></div>`:''}</div></div>`;}else if(wrc)wrc.innerHTML='';const twc=el('todayWinsCard');if(twc){if(done.length){twc.innerHTML=`<div class="group-card">${done.map(t=>`<div class="group-row"><div class="row-icon-sq orange"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(t.text)}</div></div></div>`).join('')}</div>`;}else twc.innerHTML=`<div class="empty"><div class="empty-msg">Complete tasks and they'll appear here.</div></div>`;}const hist=el('historySection'),keys=Object.keys(winsHistory).sort().reverse();if(!hist)return;if(!keys.length){hist.innerHTML='';return;}hist.innerHTML=`<div class="section-header">Past Wins</div>`+keys.map(k=>{const items=winsHistory[k];if(!items?.length)return'';return`<div class="history-date-hdr">${prettyDate(k)}</div><div class="group-card">${items.map(i=>`<div class="group-row"><div class="row-icon-sq"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(i)}</div></div></div>`).join('')}</div>`;}).join('');}
+const WINS_PAGE_SIZE=90;let _winsShowAll=false;
+function renderWins(){const done=tasks.filter(t=>t.completed);const wbn=el('winsBigNum');if(wbn)wbn.textContent=done.length;const ctx=el('winsContext');if(ctx){if(!done.length)ctx.innerHTML="Keep going —<br><strong>you've got this.</strong>";else if(done.length===1)ctx.innerHTML="You completed<br><strong>1 win</strong> today.";else ctx.innerHTML=`You recorded<br><strong>${done.length} wins</strong> today.`;}const allKeys=Object.keys(winsHistory),wrc=el('weeklyRecap');if(wrc&&allKeys.length>=2){const rk=allKeys.sort().reverse().slice(0,7),wt=rk.reduce((a,k)=>a+(winsHistory[k]?.length||0),0);const bd=rk.reduce((b,k)=>{const c=winsHistory[k]?.length||0;return c>b.count?{date:k,count:c}:b},{date:'',count:0});wrc.innerHTML=`<div class="section-header">Weekly Recap</div><div class="recap-card"><div class="recap-eyebrow">Last ${rk.length} Days</div><div class="recap-grid"><div class="recap-stat"><div class="recap-num">${wt}</div><div class="recap-label">Total wins</div></div><div class="recap-stat"><div class="recap-num">${bestStreak}</div><div class="recap-label">Best streak</div></div>${bd.date?`<div class="recap-wide"><div class="recap-wide-label">Most productive day</div><div class="recap-wide-val">${prettyDate(bd.date)}</div></div>`:''}</div></div>`;}else if(wrc)wrc.innerHTML='';const twc=el('todayWinsCard');if(twc){if(done.length){twc.innerHTML=`<div class="group-card">${done.map(t=>`<div class="group-row"><div class="row-icon-sq orange"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(t.text)}</div></div></div>`).join('')}</div>`;}else twc.innerHTML=`<div class="empty"><div class="empty-msg">Complete tasks and they'll appear here.</div></div>`;}const hist=el('historySection'),keys=Object.keys(winsHistory).sort().reverse();if(!hist)return;if(!keys.length){hist.innerHTML='';return;}const visibleKeys=_winsShowAll?keys:keys.slice(0,WINS_PAGE_SIZE);const hasMore=!_winsShowAll&&keys.length>WINS_PAGE_SIZE;hist.innerHTML=`<div class="section-header">Past Wins</div>`+visibleKeys.map(k=>{const items=winsHistory[k];if(!items?.length)return'';return`<div class="history-date-hdr">${prettyDate(k)}</div><div class="group-card">${items.map(i=>`<div class="group-row"><div class="row-icon-sq"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="row-body"><div class="row-title">${esc(i)}</div></div></div>`).join('')}</div>`;}).join('')+(hasMore?`<button onclick="_winsShowAll=true;renderWins();" aria-label="Show all win history" style="width:100%;padding:12px;background:var(--g1);border:1px solid var(--sep2);border-radius:var(--r-md);color:var(--l2);font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px;">Show all ${keys.length} days</button>`:'');}
 function updateBadge(){const d=tasks.filter(t=>t.completed).length,b=el('winsBadge');if(!b)return;b.style.display=d?'block':'none';b.textContent=d;}
 function clearWinsBadge(){const b=el('winsBadge');if(b)b.style.display='none';}
 function renderAll(){renderTasks();renderStats();renderProgress();renderHabits();renderConf();renderWins();updateBadge();renderScore();renderStreak();renderLevel();renderMomentum();}
@@ -2136,7 +2137,14 @@ function init(){
   const _pi=el('prayerInput');if(_pi)_pi.addEventListener('keydown',e=>{if(e.key==='Enter')addPrayer();});
   if(!window._visibilityListenerAdded){
     window._visibilityListenerAdded=true;
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReset();updateHeader();renderAll();if(fbUser)pullFromCloud(true);}});
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='hidden'){
+        if(fbUser&&fbDb) flushPendingPushes();
+      } else if(!document.hidden){
+        checkReset();updateHeader();renderAll();
+        if(fbUser) pullFromCloud(true);
+      }
+    });
   }
 }
 if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',init);}else{init();}
@@ -2166,6 +2174,7 @@ const SYNC_KEYS = ['sc_alarm_sound_v1', 'sc_cal_v2', 'sc_conf_v4', 'sc_custom_ca
 
 let fbApp=null, fbAuth=null, fbDb=null, fbUser=null, syncPending=false;
 let _syncUnsubscribe=null, _pushErrTs=0;
+const _pushDebounceTimers={}, _pushPendingKeys={};
 
 function initFirebase(){
   try{
@@ -2182,8 +2191,11 @@ function initFirebase(){
       window._syncPatched=true;
       const _orig=localStorage.setItem.bind(localStorage);
       localStorage.setItem.__original=_orig;
-      const _pushDebounceTimers={};
-      function debouncedPush(key,val){clearTimeout(_pushDebounceTimers[key]);_pushDebounceTimers[key]=setTimeout(()=>pushKeyToCloud(key,val),1500);}
+      function debouncedPush(key,val){
+        _pushPendingKeys[key]=val;
+        clearTimeout(_pushDebounceTimers[key]);
+        _pushDebounceTimers[key]=setTimeout(()=>{delete _pushPendingKeys[key];pushKeyToCloud(key,val);},5000);
+      }
       localStorage.setItem=function(key,val){
         _orig(key,val);
         if(fbUser&&SYNC_KEYS.includes(key))debouncedPush(key,val);
@@ -2279,6 +2291,19 @@ async function pushAllToCloud(){
     setSyncDot('active');
     showToast('✓ Data backed up to cloud');
   }catch(e){ setSyncDot(''); showToast('Sync write failed'); }
+}
+
+// Flush any debounced writes immediately — called when app goes to background
+// so data queued in the 5-second window isn't lost if the app is closed.
+function flushPendingPushes(){
+  const keys=Object.keys(_pushPendingKeys);
+  keys.forEach(key=>{
+    clearTimeout(_pushDebounceTimers[key]);
+    delete _pushDebounceTimers[key];
+    const val=_pushPendingKeys[key];
+    delete _pushPendingKeys[key];
+    pushKeyToCloud(key,val);
+  });
 }
 
 function handleSyncBtn(){
