@@ -2192,6 +2192,27 @@ function initFirebase(){
       if(user){
         setSyncUI(true, user.displayName||user.email);
         await pullFromCloud();
+        let _lastSyncTs=null;
+        fbDb.collection('users').doc(fbUser.uid).collection('sync').doc('appData')
+          .onSnapshot(snap=>{
+            if(!snap.exists)return;
+            const data=snap.data();
+            const ts=data._ts?data._ts.toMillis():null;
+            if(ts&&ts===_lastSyncTs)return;
+            _lastSyncTs=ts;
+            const orig=localStorage.setItem.__original||Object.getPrototypeOf(localStorage).setItem.bind(localStorage);
+            let changed=false;
+            SYNC_KEYS.forEach(k=>{
+              if(data[k]!==undefined&&data[k]!==localStorage.getItem(k)){
+                orig(k,data[k]);changed=true;
+              }
+            });
+            if(changed){
+              if(typeof renderAll==='function')setTimeout(renderAll,100);
+              if(typeof renderPrayers==='function')setTimeout(renderPrayers,150);
+              setSyncDot('active');
+            }
+          },err=>console.warn('Sync listener error:',err));
       } else {
         setSyncUI(false);
       }
